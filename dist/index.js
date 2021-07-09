@@ -28374,8 +28374,8 @@ var date_fns = __nccwpck_require__(3314);
 ;// CONCATENATED MODULE: ./src/octokit.ts
 
 
-const token = core_default().getInput('token', { required: true });
-const octokit = github_default().getOctokit(token).rest;
+const token = core.getInput('token', { required: true });
+const octokit = github.getOctokit(token).rest;
 /* harmony default export */ const src_octokit = (octokit);
 
 ;// CONCATENATED MODULE: ./src/createRelease.ts
