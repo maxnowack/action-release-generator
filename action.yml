@@ -1,0 +1,11 @@
+name: "Release Generator"
+description: "Generate a Github release with the name 'v[YEAR].[MONTH].[NUMBER]'"
+author: "maxnowack"
+inputs:
+  token:
+    description: "The token to access Github's API"
+    required: true
+outputs: {}
+runs:
+  using: "node12"
+  main: "dist/index.js"

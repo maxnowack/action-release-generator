@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "declaration": true,
+    "rootDirs": [
+      "./src"
+    ],
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ],
+    "strict": true,
+    "downlevelIteration": true,
+    "lib": [
+      "es2017",
+      "dom"
+    ],
+    "noErrorTruncation": true,
+    "esModuleInterop": true,
+    "noImplicitAny": false,
+    "alwaysStrict": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "baseUrl": "./",
+    "paths": {
+      "src/*": [
+        "./src/*"
+      ],
+    }
+  },
+  "exclude": [
+    "dist",
+    "node_modules"
+  ],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    ".eslintrc.js"
+  ]
+}

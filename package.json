@@ -1,0 +1,37 @@
+{
+  "name": "action-release-generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "eslint --ext .ts .",
+    "build": "ncc build src/index.ts --minify -o dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxnowack/action-release-generator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maxnowack/action-release-generator/issues"
+  },
+  "homepage": "https://github.com/maxnowack/action-release-generator#readme",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "@actions/github": "^5.0.0",
+    "date-fns": "^2.22.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.28.2",
+    "@typescript-eslint/parser": "^4.28.2",
+    "@vercel/ncc": "^0.28.6",
+    "eslint": "^7.30.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-import-resolver-typescript": "^2.4.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-prefer-object-spread": "^1.2.1",
+    "typescript": "^4.3.5"
+  }
+}
