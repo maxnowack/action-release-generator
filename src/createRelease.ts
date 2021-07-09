@@ -41,7 +41,12 @@ const getReleaseNotes = (commits: Commits) => commits
   .filter(commit => !badwords(commit.commit.message))
   .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n')
 
-const createRelease = async (target = 'master', owner: string, repo: string) => {
+const createRelease = async (
+  target: string,
+  owner: string,
+  repo: string,
+  defaultBranch: string,
+) => {
   const latestRelease = await getLatestRelease(owner, repo)
   if (!latestRelease) throw new Error('Cannot find previous release')
   const newVersion = incrementVersion(latestRelease)
@@ -49,7 +54,7 @@ const createRelease = async (target = 'master', owner: string, repo: string) => 
   const { data: { commits } } = await octokit.repos.compareCommitsWithBasehead({
     owner,
     repo,
-    basehead: `${latestRelease}...master`,
+    basehead: `${latestRelease}...${defaultBranch}`,
   })
 
   if (!commits.length) return { commits }

@@ -1,4 +1,4 @@
-declare const createRelease: (target: string | undefined, owner: string, repo: string) => Promise<{
+declare const createRelease: (target: string, owner: string, repo: string, defaultBranch: string) => Promise<{
     commits: {
         url: string;
         sha: string;

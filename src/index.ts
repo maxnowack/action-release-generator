@@ -8,8 +8,9 @@ const { repo, owner } = github.context.repo
 
 async function promoteVersion() {
   const latestRelease = await getLatestRelease(owner, repo)
+  const { data: { default_branch: defaultBranch } } = await octokit.repos.get({ repo, owner })
   const { data: { object: { sha: masterSha } } } = await octokit.git.getRef({
-    repo, owner, ref: 'heads/master',
+    repo, owner, ref: `heads/${defaultBranch}`,
   })
 
   if (latestRelease) {
@@ -22,7 +23,7 @@ async function promoteVersion() {
     }
   }
 
-  return createRelease(masterSha, owner, repo).then(({ newVersion, commits }) => {
+  return createRelease(masterSha, owner, repo, defaultBranch).then(({ newVersion, commits }) => {
     const msg = `Released ${newVersion} of ${repo} (${commits.length} commits)`
     console.log(msg)
     return msg

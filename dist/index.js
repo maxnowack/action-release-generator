@@ -28394,7 +28394,7 @@ const badwords = (msg) => {
 const getReleaseNotes = (commits) => commits
     .filter(commit => !badwords(commit.commit.message))
     .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n');
-const createRelease = async (target = 'master', owner, repo) => {
+const createRelease = async (target, owner, repo, defaultBranch) => {
     const latestRelease = await getLatestRelease(owner, repo);
     if (!latestRelease)
         throw new Error('Cannot find previous release');
@@ -28402,7 +28402,7 @@ const createRelease = async (target = 'master', owner, repo) => {
     const { data: { commits } } = await src_octokit.repos.compareCommitsWithBasehead({
         owner,
         repo,
-        basehead: `${latestRelease}...master`,
+        basehead: `${latestRelease}...${defaultBranch}`,
     });
     if (!commits.length)
         return { commits };
@@ -28431,8 +28431,9 @@ const createRelease = async (target = 'master', owner, repo) => {
 const { repo, owner } = github.context.repo;
 async function promoteVersion() {
     const latestRelease = await getLatestRelease(owner, repo);
+    const { data: { default_branch: defaultBranch } } = await src_octokit.repos.get({ repo, owner });
     const { data: { object: { sha: masterSha } } } = await src_octokit.git.getRef({
-        repo, owner, ref: 'heads/master',
+        repo, owner, ref: `heads/${defaultBranch}`,
     });
     if (latestRelease) {
         const { data: { object: { sha: releaseSha } } } = await src_octokit.git.getRef({ repo, owner, ref: `tags/${latestRelease}` });
@@ -28442,7 +28443,7 @@ async function promoteVersion() {
             return msg;
         }
     }
-    return src_createRelease(masterSha, owner, repo).then(({ newVersion, commits }) => {
+    return src_createRelease(masterSha, owner, repo, defaultBranch).then(({ newVersion, commits }) => {
         const msg = `Released ${newVersion} of ${repo} (${commits.length} commits)`;
         console.log(msg);
         return msg;
