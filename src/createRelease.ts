@@ -15,7 +15,7 @@ const parseVersion = (version: string) => {
 
 const incrementVersion = (version: string) => {
   const parsedVersion = parseVersion(version)
-  const year = parseInt(format(new Date(), 'YY'), 10)
+  const year = parseInt(format(new Date(), 'yy'), 10)
   const month = parseInt(format(new Date(), 'M'), 10)
 
   const num = parsedVersion.year === year && parsedVersion.month === month

@@ -28374,7 +28374,7 @@ const parseVersion = (version) => {
 };
 const incrementVersion = (version) => {
     const parsedVersion = parseVersion(version);
-    const year = parseInt((0,date_fns.format)(new Date(), 'YY'), 10);
+    const year = parseInt((0,date_fns.format)(new Date(), 'yy'), 10);
     const month = parseInt((0,date_fns.format)(new Date(), 'M'), 10);
     const num = parsedVersion.year === year && parsedVersion.month === month
         ? parsedVersion.num + 1
