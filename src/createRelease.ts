@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { AsyncReturnType } from './utils/typescript'
 import octokit from './octokit'
+import getLatestRelease from './getLatestRelease'
 
 const parseVersion = (version: string) => {
   const matches = /v([0-9]+)\.([0-9]+)\.([0-9]+)/.exec(version)
@@ -41,13 +42,14 @@ const getReleaseNotes = (commits: Commits) => commits
   .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n')
 
 const createRelease = async (target = 'master', owner: string, repo: string) => {
-  const { data: latestRelease } = await octokit.repos.getLatestRelease({ owner, repo })
-  const newVersion = incrementVersion(latestRelease.tag_name)
+  const latestRelease = await getLatestRelease(owner, repo)
+  if (!latestRelease) throw new Error('Cannot find previous release')
+  const newVersion = incrementVersion(latestRelease)
 
   const { data: { commits } } = await octokit.repos.compareCommitsWithBasehead({
     owner,
     repo,
-    basehead: `${latestRelease.tag_name}...master`,
+    basehead: `${latestRelease}...master`,
   })
 
   if (!commits.length) return { commits }

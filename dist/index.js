@@ -15511,7 +15511,7 @@ var _index213 = _interopRequireDefault(__nccwpck_require__(1952));
 
 var _index214 = _interopRequireDefault(__nccwpck_require__(970));
 
-var _index215 = _interopRequireDefault(__nccwpck_require__(2481));
+var _index215 = _interopRequireDefault(__nccwpck_require__(3492));
 
 var _index216 = _interopRequireDefault(__nccwpck_require__(3925));
 
@@ -25374,7 +25374,7 @@ module.exports = exports.default;
 
 /***/ }),
 
-/***/ 2481:
+/***/ 3492:
 /***/ ((module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -28338,8 +28338,6 @@ __nccwpck_require__.r(__webpack_exports__);
 var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(5438);
-// EXTERNAL MODULE: ./node_modules/date-fns/index.js
-var date_fns = __nccwpck_require__(3314);
 ;// CONCATENATED MODULE: ./src/octokit.ts
 
 
@@ -28347,7 +28345,22 @@ const token = core.getInput('token', { required: true });
 const octokit = github.getOctokit(token).rest;
 /* harmony default export */ const src_octokit = (octokit);
 
+;// CONCATENATED MODULE: ./src/getLatestRelease.ts
+
+async function getLatestRelease(owner, repo) {
+    try {
+        const { data: { tag_name: latestRelease }, } = await src_octokit.repos.getLatestRelease({ repo, owner });
+        return latestRelease;
+    }
+    catch (e) {
+        return undefined;
+    }
+}
+
+// EXTERNAL MODULE: ./node_modules/date-fns/index.js
+var date_fns = __nccwpck_require__(3314);
 ;// CONCATENATED MODULE: ./src/createRelease.ts
+
 
 
 const parseVersion = (version) => {
@@ -28382,12 +28395,14 @@ const getReleaseNotes = (commits) => commits
     .filter(commit => !badwords(commit.commit.message))
     .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n');
 const createRelease = async (target = 'master', owner, repo) => {
-    const { data: latestRelease } = await src_octokit.repos.getLatestRelease({ owner, repo });
-    const newVersion = incrementVersion(latestRelease.tag_name);
+    const latestRelease = await getLatestRelease(owner, repo);
+    if (!latestRelease)
+        throw new Error('Cannot find previous release');
+    const newVersion = incrementVersion(latestRelease);
     const { data: { commits } } = await src_octokit.repos.compareCommitsWithBasehead({
         owner,
         repo,
-        basehead: `${latestRelease.tag_name}...master`,
+        basehead: `${latestRelease}...master`,
     });
     if (!commits.length)
         return { commits };
@@ -28412,17 +28427,20 @@ const createRelease = async (target = 'master', owner, repo) => {
 
 
 
+
 const { repo, owner } = github.context.repo;
 async function promoteVersion() {
-    const { data: { tag_name: latestRelease }, } = await src_octokit.repos.getLatestRelease({ repo, owner });
+    const latestRelease = await getLatestRelease(owner, repo);
     const { data: { object: { sha: masterSha } } } = await src_octokit.git.getRef({
         repo, owner, ref: 'heads/master',
     });
-    const { data: { object: { sha: releaseSha } } } = await src_octokit.git.getRef({ repo, owner, ref: `tags/${latestRelease}` });
-    if (masterSha === releaseSha) {
-        const msg = `No changes for a new release of ${repo} available`;
-        console.log(msg);
-        return msg;
+    if (latestRelease) {
+        const { data: { object: { sha: releaseSha } } } = await src_octokit.git.getRef({ repo, owner, ref: `tags/${latestRelease}` });
+        if (masterSha === releaseSha) {
+            const msg = `No changes for a new release of ${repo} available`;
+            console.log(msg);
+            return msg;
+        }
     }
     return src_createRelease(masterSha, owner, repo).then(({ newVersion, commits }) => {
         const msg = `Released ${newVersion} of ${repo} (${commits.length} commits)`;

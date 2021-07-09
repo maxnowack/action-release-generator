@@ -1,23 +1,25 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import getLatestRelease from 'src/getLatestRelease'
 import createRelease from './createRelease'
 import octokit from './octokit'
 
 const { repo, owner } = github.context.repo
 
 async function promoteVersion() {
-  const {
-    data: { tag_name: latestRelease },
-  } = await octokit.repos.getLatestRelease({ repo, owner })
+  const latestRelease = await getLatestRelease(owner, repo)
   const { data: { object: { sha: masterSha } } } = await octokit.git.getRef({
     repo, owner, ref: 'heads/master',
   })
-  const { data: { object: { sha: releaseSha } } } = await octokit.git.getRef({ repo, owner, ref: `tags/${latestRelease}` })
 
-  if (masterSha === releaseSha) {
-    const msg = `No changes for a new release of ${repo} available`
-    console.log(msg)
-    return msg
+  if (latestRelease) {
+    const { data: { object: { sha: releaseSha } } } = await octokit.git.getRef({ repo, owner, ref: `tags/${latestRelease}` })
+
+    if (masterSha === releaseSha) {
+      const msg = `No changes for a new release of ${repo} available`
+      console.log(msg)
+      return msg
+    }
   }
 
   return createRelease(masterSha, owner, repo).then(({ newVersion, commits }) => {
