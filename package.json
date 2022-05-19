@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint --ext .ts .",
+    "preversion": "npm run build && git add dist && git commit --allow-empty -m \"chore: build v$npm_package_version\"",
     "build": "ncc build src/index.ts -o dist"
   },
   "repository": {
