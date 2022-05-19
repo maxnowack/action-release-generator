@@ -5,6 +5,9 @@ inputs:
   token:
     description: "The token to access Github's API"
     required: true
+  badwords:
+    description: "Comma separated list of badwords for filtering commits"
+    required: false
 outputs: {}
 runs:
   using: "node12"

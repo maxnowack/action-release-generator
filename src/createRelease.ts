@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import { format } from 'date-fns'
 import { AsyncReturnType } from './utils/typescript'
 import octokit from './octokit'
@@ -25,20 +26,18 @@ const incrementVersion = (version: string) => {
   return `v${year}.${month}.${num}`
 }
 
-const badwords = (msg: string) => {
+let badwords = core.getInput('badwords', { required: false, trimWhitespace: true })
+// eslint-disable-next-line max-len
+if (!badwords) badwords = 'updated translation,merge branch,merge pull request,linting,chore:,chore(deps):'
+
+const hasBadwords = (msg: string) => {
   const str = msg.toLowerCase()
-  const words = [
-    'updated translation',
-    'merge branch',
-    'merge pull request',
-    'linting',
-  ]
-  return words.reduce((failed, word) => failed || str.indexOf(word) >= 0, false)
+  return badwords.split(',').reduce((failed, word) => failed || str.includes(word), false)
 }
 
 type Commits = AsyncReturnType<typeof octokit.repos.compareCommitsWithBasehead>['data']['commits']
 const getReleaseNotes = (commits: Commits) => commits
-  .filter(commit => !badwords(commit.commit.message))
+  .filter(commit => !hasBadwords(commit.commit.message))
   .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n')
 
 const createRelease = async (
