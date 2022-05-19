@@ -8,6 +8,9 @@ inputs:
   badwords:
     description: "Comma separated list of badwords for filtering commits"
     required: false
+  sortCommitsByMessage:
+    description: "Indicates wether to sort commits alphabetically instead of by date"
+    required: false
 outputs: {}
 runs:
   using: "node12"

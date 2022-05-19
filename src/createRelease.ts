@@ -1,8 +1,15 @@
 import * as core from '@actions/core'
+import { sortBy } from 'lodash'
 import { format } from 'date-fns'
 import { AsyncReturnType } from './utils/typescript'
 import octokit from './octokit'
 import getLatestRelease from './getLatestRelease'
+
+const sortCommitsByMessageText = core.getInput('sortCommitsByMessage', {
+  required: false,
+  trimWhitespace: true,
+})
+const sortCommitsByMessage = sortCommitsByMessageText === 'true' || sortCommitsByMessageText === '1'
 
 const parseVersion = (version: string) => {
   const matches = /v([0-9]+)\.([0-9]+)\.([0-9]+)/.exec(version)
@@ -36,7 +43,9 @@ const hasBadwords = (msg: string) => {
 }
 
 type Commits = AsyncReturnType<typeof octokit.repos.compareCommitsWithBasehead>['data']['commits']
-const getReleaseNotes = (commits: Commits) => commits
+const getReleaseNotes = (commits: Commits) => (sortCommitsByMessage
+  ? sortBy(commits, commit => commit.commit.message.split('\n')[0])
+  : commits)
   .filter(commit => !hasBadwords(commit.commit.message))
   .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n')
 
