@@ -73,7 +73,11 @@ const createRelease = async (
     tag_name: newVersion,
     target_commitish: target,
     name: newVersion,
-    body: releaseNotes,
+    body: `
+[compare with main branch](https://github.com/${owner}/${repo}/compare/${newVersion}...${defaultBranch})
+
+# changelog
+${releaseNotes}`,
   })
   return {
     newVersion,
