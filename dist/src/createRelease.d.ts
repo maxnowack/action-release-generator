@@ -1,4 +1,4 @@
-declare const createRelease: (target: string, owner: string, repo: string, defaultBranch: string) => Promise<{
+declare const createRelease: (target: string, owner: string, repo: string, baseBranch: string) => Promise<{
     commits: {
         url: string;
         sha: string;
@@ -87,16 +87,16 @@ declare const createRelease: (target: string, owner: string, repo: string, defau
             total?: number | undefined;
         } | undefined;
         files?: {
-            filename?: string | undefined;
-            additions?: number | undefined;
-            deletions?: number | undefined;
-            changes?: number | undefined;
-            status?: string | undefined;
-            raw_url?: string | undefined;
-            blob_url?: string | undefined;
+            sha: string;
+            filename: string;
+            status: "added" | "removed" | "modified" | "renamed" | "copied" | "changed" | "unchanged";
+            additions: number;
+            deletions: number;
+            changes: number;
+            blob_url: string;
+            raw_url: string;
+            contents_url: string;
             patch?: string | undefined;
-            sha?: string | undefined;
-            contents_url?: string | undefined;
             previous_filename?: string | undefined;
         }[] | undefined;
     }[];
@@ -191,16 +191,16 @@ declare const createRelease: (target: string, owner: string, repo: string, defau
             total?: number | undefined;
         } | undefined;
         files?: {
-            filename?: string | undefined;
-            additions?: number | undefined;
-            deletions?: number | undefined;
-            changes?: number | undefined;
-            status?: string | undefined;
-            raw_url?: string | undefined;
-            blob_url?: string | undefined;
+            sha: string;
+            filename: string;
+            status: "added" | "removed" | "modified" | "renamed" | "copied" | "changed" | "unchanged";
+            additions: number;
+            deletions: number;
+            changes: number;
+            blob_url: string;
+            raw_url: string;
+            contents_url: string;
             patch?: string | undefined;
-            sha?: string | undefined;
-            contents_url?: string | undefined;
             previous_filename?: string | undefined;
         }[] | undefined;
     }[];
