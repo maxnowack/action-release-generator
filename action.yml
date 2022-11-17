@@ -11,6 +11,9 @@ inputs:
   sortCommitsByMessage:
     description: "Indicates wether to sort commits alphabetically instead of by date"
     required: false
+  branch:
+    description: "The branch from which to generate the release"
+    required: false
 outputs: {}
 runs:
   using: "node12"

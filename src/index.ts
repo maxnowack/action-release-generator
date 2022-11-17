@@ -6,11 +6,18 @@ import octokit from './octokit'
 
 const { repo, owner } = github.context.repo
 
+async function getBaseBranch() {
+  const branch = core.getInput('badwords', { required: false, trimWhitespace: true })
+  if (branch) return branch
+  const { data: { default_branch: defaultBranch } } = await octokit.repos.get({ repo, owner })
+  return defaultBranch
+}
+
 async function promoteVersion() {
   const latestRelease = await getLatestRelease(owner, repo)
-  const { data: { default_branch: defaultBranch } } = await octokit.repos.get({ repo, owner })
+  const baseBranch = await getBaseBranch()
   const { data: { object: { sha: masterSha } } } = await octokit.git.getRef({
-    repo, owner, ref: `heads/${defaultBranch}`,
+    repo, owner, ref: `heads/${baseBranch}`,
   })
 
   if (latestRelease) {
@@ -23,7 +30,7 @@ async function promoteVersion() {
     }
   }
 
-  return createRelease(masterSha, owner, repo, defaultBranch).then(({ newVersion, commits }) => {
+  return createRelease(masterSha, owner, repo, baseBranch).then(({ newVersion, commits }) => {
     const msg = `Released ${newVersion} of ${repo} (${commits.length} commits)`
     console.log(msg)
     return msg

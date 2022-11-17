@@ -53,7 +53,7 @@ const createRelease = async (
   target: string,
   owner: string,
   repo: string,
-  defaultBranch: string,
+  baseBranch: string,
 ) => {
   const latestRelease = await getLatestRelease(owner, repo)
   if (!latestRelease) throw new Error('Cannot find previous release')
@@ -62,7 +62,7 @@ const createRelease = async (
   const { data: { commits } } = await octokit.repos.compareCommitsWithBasehead({
     owner,
     repo,
-    basehead: `${latestRelease}...${defaultBranch}`,
+    basehead: `${latestRelease}...${baseBranch}`,
   })
 
   if (!commits.length) return { commits }
@@ -74,7 +74,7 @@ const createRelease = async (
     target_commitish: target,
     name: newVersion,
     body: `
-[compare with main branch](https://github.com/${owner}/${repo}/compare/${newVersion}...${defaultBranch})
+[compare with ${baseBranch} branch](https://github.com/${owner}/${repo}/compare/${newVersion}...${baseBranch})
 
 # changelog
 ${releaseNotes}`,
