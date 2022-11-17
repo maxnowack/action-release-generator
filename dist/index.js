@@ -51565,7 +51565,7 @@ const createRelease_1 = __importDefault(__nccwpck_require__(4257));
 const octokit_1 = __importDefault(__nccwpck_require__(6161));
 const { repo, owner } = github.context.repo;
 async function getBaseBranch() {
-    const branch = core.getInput('badwords', { required: false, trimWhitespace: true });
+    const branch = core.getInput('branch', { required: false, trimWhitespace: true });
     if (branch)
         return branch;
     const { data: { default_branch: defaultBranch } } = await octokit_1.default.repos.get({ repo, owner });
