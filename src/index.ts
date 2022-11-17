@@ -7,7 +7,7 @@ import octokit from './octokit'
 const { repo, owner } = github.context.repo
 
 async function getBaseBranch() {
-  const branch = core.getInput('badwords', { required: false, trimWhitespace: true })
+  const branch = core.getInput('branch', { required: false, trimWhitespace: true })
   if (branch) return branch
   const { data: { default_branch: defaultBranch } } = await octokit.repos.get({ repo, owner })
   return defaultBranch
