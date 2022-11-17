@@ -37,6 +37,6 @@ async function promoteVersion() {
   })
 }
 
-promoteVersion().catch((err) => {
+promoteVersion().catch((err: Error) => {
   core.setFailed(err)
 })
