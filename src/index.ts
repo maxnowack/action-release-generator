@@ -1,23 +1,42 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import getLatestRelease from 'src/getLatestRelease'
+import getLatestRelease from './getLatestRelease'
 import createRelease from './createRelease'
 import octokit from './octokit'
 
 const { repo, owner } = github.context.repo
 
-async function getBaseBranch() {
-  const branch = core.getInput('branch', { required: false, trimWhitespace: true })
-  if (branch) return branch
+async function getDefaultBranch() {
   const { data: { default_branch: defaultBranch } } = await octokit.repos.get({ repo, owner })
   return defaultBranch
 }
 
+function getBaseBranch() {
+  const branch = core.getInput('branch', { required: false, trimWhitespace: true })
+  if (!branch) return undefined
+  return branch
+}
+
+function getRef() {
+  const ref = core.getInput('ref', { required: false, trimWhitespace: true })
+  if (!ref) return undefined
+  return ref.replace('refs/', '')
+}
+
+function getUseNameFromRef() {
+  const useNameFromRef = core.getInput('useNameFromRef', { required: false, trimWhitespace: true })
+  return Boolean(useNameFromRef)
+}
+
 async function promoteVersion() {
   const latestRelease = await getLatestRelease(owner, repo)
-  const baseBranch = await getBaseBranch()
+  const defaultBranch = await getDefaultBranch()
+  const baseBranch = getBaseBranch() || defaultBranch
+  const ref = getRef() || `heads/${baseBranch}`
+  const useNameFromRef = getUseNameFromRef()
+
   const { data: { object: { sha: masterSha } } } = await octokit.git.getRef({
-    repo, owner, ref: `heads/${baseBranch}`,
+    repo, owner, ref,
   })
 
   if (latestRelease) {
@@ -30,7 +49,14 @@ async function promoteVersion() {
     }
   }
 
-  return createRelease(masterSha, owner, repo, baseBranch).then(({ newVersion, commits }) => {
+  return createRelease({
+    target: masterSha,
+    ref,
+    owner,
+    repo,
+    baseBranch,
+    useNameFromRef,
+  }).then(({ newVersion, commits }) => {
     const msg = `Released ${newVersion} of ${repo} (${commits.length} commits)`
     console.log(msg)
     return msg

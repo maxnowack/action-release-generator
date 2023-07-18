@@ -12,7 +12,13 @@ inputs:
     description: "Indicates wether to sort commits alphabetically instead of by date"
     required: false
   branch:
-    description: "The branch from which to generate the release"
+    description: "The base branch of the repository. Defaults to your configured default branch"
+    required: false
+  ref:
+    description: "The ref to create the release from. Defaults to the base branch"
+    required: false
+  useNameFromRef:
+    description: "Indicates wether to use the ref as the release name"
     required: false
 outputs: {}
 runs:

@@ -51462,25 +51462,28 @@ const hasBadwords = (msg) => {
     const str = msg.toLowerCase();
     return badwords.split(',').reduce((failed, word) => failed || str.includes(word), false);
 };
+function getTagName(ref) {
+    return ref.replace('refs/tags/', '').replace('tags/', '');
+}
 const getReleaseNotes = (commits) => (sortCommitsByMessage
     ? (0, lodash_1.sortBy)(commits, commit => commit.commit.message.split('\n')[0])
     : commits)
     .filter(commit => !hasBadwords(commit.commit.message))
     .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n');
-const createRelease = async (target, owner, repo, baseBranch) => {
+const createRelease = async ({ target, ref, owner, repo, baseBranch, useNameFromRef = false, }) => {
     const latestRelease = await (0, getLatestRelease_1.default)(owner, repo);
     if (!latestRelease)
         throw new Error('Cannot find previous release');
-    const newVersion = incrementVersion(latestRelease);
+    const newVersion = useNameFromRef ? getTagName(ref) : incrementVersion(latestRelease);
     const { data: { commits } } = await octokit_1.default.repos.compareCommitsWithBasehead({
         owner,
         repo,
-        basehead: `${latestRelease}...${baseBranch}`,
+        basehead: `${latestRelease}...${useNameFromRef ? newVersion : baseBranch}`,
     });
     if (!commits.length)
         return { commits };
     const releaseNotes = getReleaseNotes(commits);
-    await octokit_1.default.repos.createRelease({
+    console.log(JSON.stringify({
         owner,
         repo,
         tag_name: newVersion,
@@ -51491,7 +51494,13 @@ const createRelease = async (target, owner, repo, baseBranch) => {
 
 # changelog
 ${releaseNotes}`,
-    });
+    }));
+    await octokit_1.default.repos.createRelease(Object.assign(Object.assign({ owner,
+        repo, tag_name: newVersion }, useNameFromRef ? {} : { target_commitish: target }), { name: newVersion, body: `
+[compare with ${baseBranch} branch](https://github.com/${owner}/${repo}/compare/${newVersion}...${baseBranch})
+
+# changelog
+${releaseNotes}` }));
     return {
         newVersion,
         commits,
@@ -51564,18 +51573,34 @@ const getLatestRelease_1 = __importDefault(__nccwpck_require__(9895));
 const createRelease_1 = __importDefault(__nccwpck_require__(4257));
 const octokit_1 = __importDefault(__nccwpck_require__(6161));
 const { repo, owner } = github.context.repo;
-async function getBaseBranch() {
-    const branch = core.getInput('branch', { required: false, trimWhitespace: true });
-    if (branch)
-        return branch;
+async function getDefaultBranch() {
     const { data: { default_branch: defaultBranch } } = await octokit_1.default.repos.get({ repo, owner });
     return defaultBranch;
 }
+function getBaseBranch() {
+    const branch = core.getInput('branch', { required: false, trimWhitespace: true });
+    if (!branch)
+        return undefined;
+    return branch;
+}
+function getRef() {
+    const ref = core.getInput('ref', { required: false, trimWhitespace: true });
+    if (!ref)
+        return undefined;
+    return ref.replace('refs/', '');
+}
+function getUseNameFromRef() {
+    const useNameFromRef = core.getInput('useNameFromRef', { required: false, trimWhitespace: true });
+    return Boolean(useNameFromRef);
+}
 async function promoteVersion() {
     const latestRelease = await (0, getLatestRelease_1.default)(owner, repo);
-    const baseBranch = await getBaseBranch();
+    const defaultBranch = await getDefaultBranch();
+    const baseBranch = getBaseBranch() || defaultBranch;
+    const ref = getRef() || `heads/${baseBranch}`;
+    const useNameFromRef = getUseNameFromRef();
     const { data: { object: { sha: masterSha } } } = await octokit_1.default.git.getRef({
-        repo, owner, ref: `heads/${baseBranch}`,
+        repo, owner, ref,
     });
     if (latestRelease) {
         const { data: { object: { sha: releaseSha } } } = await octokit_1.default.git.getRef({ repo, owner, ref: `tags/${latestRelease}` });
@@ -51585,7 +51610,14 @@ async function promoteVersion() {
             return msg;
         }
     }
-    return (0, createRelease_1.default)(masterSha, owner, repo, baseBranch).then(({ newVersion, commits }) => {
+    return (0, createRelease_1.default)({
+        target: masterSha,
+        ref,
+        owner,
+        repo,
+        baseBranch,
+        useNameFromRef,
+    }).then(({ newVersion, commits }) => {
         const msg = `Released ${newVersion} of ${repo} (${commits.length} commits)`;
         console.log(msg);
         return msg;

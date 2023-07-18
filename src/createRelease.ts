@@ -42,6 +42,10 @@ const hasBadwords = (msg: string) => {
   return badwords.split(',').reduce((failed, word) => failed || str.includes(word), false)
 }
 
+function getTagName(ref: string) {
+  return ref.replace('refs/tags/', '').replace('tags/', '')
+}
+
 type Commits = AsyncReturnType<typeof octokit.repos.compareCommitsWithBasehead>['data']['commits']
 const getReleaseNotes = (commits: Commits) => (sortCommitsByMessage
   ? sortBy(commits, commit => commit.commit.message.split('\n')[0])
@@ -49,29 +53,50 @@ const getReleaseNotes = (commits: Commits) => (sortCommitsByMessage
   .filter(commit => !hasBadwords(commit.commit.message))
   .map(commit => `* ${commit.sha} ${commit.commit.message.split('\n')[0]}`).join('\r\n')
 
-const createRelease = async (
+const createRelease = async ({
+  target,
+  ref,
+  owner,
+  repo,
+  baseBranch,
+  useNameFromRef = false,
+}: {
   target: string,
+  ref: string,
   owner: string,
   repo: string,
   baseBranch: string,
-) => {
+  useNameFromRef?: boolean,
+}) => {
   const latestRelease = await getLatestRelease(owner, repo)
   if (!latestRelease) throw new Error('Cannot find previous release')
-  const newVersion = incrementVersion(latestRelease)
+  const newVersion = useNameFromRef ? getTagName(ref) : incrementVersion(latestRelease)
 
   const { data: { commits } } = await octokit.repos.compareCommitsWithBasehead({
     owner,
     repo,
-    basehead: `${latestRelease}...${baseBranch}`,
+    basehead: `${latestRelease}...${useNameFromRef ? newVersion : baseBranch}`,
   })
 
   if (!commits.length) return { commits }
   const releaseNotes = getReleaseNotes(commits)
-  await octokit.repos.createRelease({
+  console.log(JSON.stringify({
     owner,
     repo,
     tag_name: newVersion,
     target_commitish: target,
+    name: newVersion,
+    body: `
+[compare with ${baseBranch} branch](https://github.com/${owner}/${repo}/compare/${newVersion}...${baseBranch})
+
+# changelog
+${releaseNotes}`,
+  }))
+  await octokit.repos.createRelease({
+    owner,
+    repo,
+    tag_name: newVersion,
+    ...useNameFromRef ? {} : { target_commitish: target },
     name: newVersion,
     body: `
 [compare with ${baseBranch} branch](https://github.com/${owner}/${repo}/compare/${newVersion}...${baseBranch})
